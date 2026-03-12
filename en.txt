@@ -1,0 +1,8 @@
+LIBRARIES_API_KEY=your_actual_api_key_here
+
+# --- GCP CONFIGURATION ---
+# This is the path to the Service Account JSON key you downloaded
+GOOGLE_APPLICATION_CREDENTIALS="./gcp-service-account.json"
+
+# The name of the bucket we decided on earlier
+GCS_BUCKET_NAME="oss-metrics-dev-raw-landing-asiasouth1"

@@ -5,7 +5,7 @@ from urllib3.util.retry import Retry
 from logger import logger
 from config import BASE_URL, API_KEY
 
-# Disable SSL Warnings 
+# Disable SSL Warnings for local dev
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def get_resilient_session():
@@ -13,32 +13,20 @@ def get_resilient_session():
     Creates a session that automatically handles 429 rate limits 
     and network instability using exponential backoff.
     """
-    session = requests.Session() # Open a reusable connection pool
+    session = requests.Session()
     session.verify = False 
-
-    # handle the Retry 
-    retry = Retry( 
-        total=3, # No of try 
-        backoff_factor=2,
-        status_forcelist=[429, 500, 502, 503] 
+    
+    retry = Retry(
+        total=5,
+        backoff_factor=2, 
+        status_forcelist=[429, 500, 502, 503, 504]
     )
-    adapter = HTTPAdapter(max_retries=retry)# Used to write the retry logic we used to place here 
-    session.mount("https://", adapter) # Implement the adapater
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
     session.mount("http://", adapter)
     return session
 
 def fetch_dependencies(session, platform, library):
-    url = f"{BASE_URL}/{platform}/{library}/latest/dependencies?api_key={API_KEY}"
-    try:
-        response = session.get(url, timeout=10,verify=False) # use the connection pool ,wait for 10 second if server crash , bypass the SSL certificate
-        response.raise_for_status()# if the request returned an usucessful status code rasie and error
-        return response.json()# return the python dict
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Network error fetching dependencies for {library}: {e}")
-        return None
-
-# handle the pagination part 
-'''def fetch_dependencies(session, platform, library):
     """
     Fetches all pages of dependencies for a given library.
     Handles pagination by looping until an empty or partial page is returned.
@@ -52,7 +40,7 @@ def fetch_dependencies(session, platform, library):
         url = f"{BASE_URL}/{platform}/{library}/latest/dependencies?api_key={API_KEY}&page={page}&per_page={per_page}"
         
         try:
-            response = session.get(url, timeout=10)
+            response = session.get(url, timeout=10,verify=False)
             response.raise_for_status()
             data = response.json()
             
@@ -81,4 +69,4 @@ def fetch_dependencies(session, platform, library):
             # The watermark won't update, and it will try again cleanly on the next run.
             return None
             
-    return base_data'''
+    return base_data
